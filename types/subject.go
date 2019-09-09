@@ -10,9 +10,9 @@ var SubjectType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Subject",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
-			Type: graphql.ID,
+			Type: graphql.String,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				if subject, ok := p.Source.(models.Subject); ok {
+				if subject, ok := p.Source.(*models.Subject); ok {
 					return subject.ID, nil
 				}
 				return nil, nil
@@ -29,6 +29,9 @@ var SubjectType = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"rating": &graphql.Field{
 			Type: RatingType,
+		},
+		"comments": &graphql.Field{
+			Type: graphql.NewList(CommentType),
 		},
 	},
 })
