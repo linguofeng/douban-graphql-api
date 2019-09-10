@@ -4,11 +4,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/graphql-go/graphql"
 	"github.com/labstack/echo/v4"
 	"github.com/linguofeng/douban-graphql-api/helpers"
 	"github.com/linguofeng/douban-graphql-api/schema"
 )
+
+var isLambda = "false"
 
 func main() {
 	app := echo.New()
@@ -59,5 +62,9 @@ func main() {
 		return nil
 	})
 
-	app.Start("localhost:1234")
+	if isLambda == "true" {
+		lambda.Start((&helpers.LambdaAdapter{Echo: app}).Handler)
+	} else {
+		app.Start("localhost:1234")
+	}
 }
