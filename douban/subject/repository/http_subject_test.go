@@ -9,7 +9,7 @@ import (
 
 func TestFetch(t *testing.T) {
 	r := repository.NewHttpSubjectRepository()
-	r.Fetch(1, 10)
+	r.Fetch("movie_showing", 1, 10)
 }
 
 func TestGetById(t *testing.T) {

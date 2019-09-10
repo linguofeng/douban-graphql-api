@@ -22,8 +22,8 @@ func NewHttpSubjectRepository() subject.Repository {
 	}
 }
 
-func (h *httpSubjectRepository) Fetch(start int, count int) (res []*models.Subject, err error) {
-	resp, err := http.Get(fmt.Sprintf("%s/subject_collection/movie_showing/items?start=%d&count=%d&apiKey=%s", h.url, start, count, h.apikey))
+func (h *httpSubjectRepository) Fetch(stype subject.SubjectType, start int, count int) (res []*models.Subject, err error) {
+	resp, err := http.Get(fmt.Sprintf("%s/subject_collection/%s/items?start=%d&count=%d&apiKey=%s", h.url, stype, start, count, h.apikey))
 	if err != nil {
 		return nil, err
 	}

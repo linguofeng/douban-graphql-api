@@ -9,5 +9,5 @@ import (
 
 func TestFetch(t *testing.T) {
 	r := usecase.NewSubjectUsecase(repository.NewHttpSubjectRepository())
-	r.Fetch(1, 10)
+	r.FetchMovieHotGaia(1, 10)
 }

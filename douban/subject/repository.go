@@ -5,6 +5,6 @@ import (
 )
 
 type Repository interface {
-	Fetch(start int, count int) ([]*models.Subject, error)
+	Fetch(stype SubjectType, start int, count int) ([]*models.Subject, error)
 	GetById(stype string, id string) (*models.SubjectDetail, error)
 }

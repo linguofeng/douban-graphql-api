@@ -10,11 +10,10 @@ import (
 var QueryType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Query",
 	Fields: graphql.Fields{
-		"subjects": &graphql.Field{
-			Type: graphql.NewList(SubjectType),
+		"allSubjects": &graphql.Field{
+			Type: AllSubjectType,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				c := subjectUsecase.NewSubjectUsecase(subjectRepo.NewHttpSubjectRepository())
-				return c.Fetch(1, 10)
+				return new(struct{}), nil
 			},
 		},
 		"subject": &graphql.Field{

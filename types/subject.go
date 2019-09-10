@@ -2,10 +2,61 @@ package types
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/linguofeng/douban-graphql-api/models"
 	reviewRepo "github.com/linguofeng/douban-graphql-api/douban/review/repository"
 	reviewUsecase "github.com/linguofeng/douban-graphql-api/douban/review/usecase"
+	subjectRepo "github.com/linguofeng/douban-graphql-api/douban/subject/repository"
+	subjectUsecase "github.com/linguofeng/douban-graphql-api/douban/subject/usecase"
+	"github.com/linguofeng/douban-graphql-api/models"
 )
+
+// AllSubjectType 所有主题类型
+var AllSubjectType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "AllSubject",
+	Fields: graphql.Fields{
+		"showing": &graphql.Field{
+			Type: graphql.NewList(SubjectType),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				c := subjectUsecase.NewSubjectUsecase(subjectRepo.NewHttpSubjectRepository())
+				return c.FetchMovieShowing(1, 10)
+			},
+		},
+		"hotGaia": &graphql.Field{
+			Type: graphql.NewList(SubjectType),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				c := subjectUsecase.NewSubjectUsecase(subjectRepo.NewHttpSubjectRepository())
+				return c.FetchMovieHotGaia(1, 10)
+			},
+		},
+		"tvHot": &graphql.Field{
+			Type: graphql.NewList(SubjectType),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				c := subjectUsecase.NewSubjectUsecase(subjectRepo.NewHttpSubjectRepository())
+				return c.FetchTvHot(1, 10)
+			},
+		},
+		"tvVarietyShow": &graphql.Field{
+			Type: graphql.NewList(SubjectType),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				c := subjectUsecase.NewSubjectUsecase(subjectRepo.NewHttpSubjectRepository())
+				return c.FetchTvVarietyShow(1, 10)
+			},
+		},
+		"bookBestseller": &graphql.Field{
+			Type: graphql.NewList(SubjectType),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				c := subjectUsecase.NewSubjectUsecase(subjectRepo.NewHttpSubjectRepository())
+				return c.FetchBookBestseller(1, 10)
+			},
+		},
+		"musicSingle": &graphql.Field{
+			Type: graphql.NewList(SubjectType),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				c := subjectUsecase.NewSubjectUsecase(subjectRepo.NewHttpSubjectRepository())
+				return c.FetchMusicSingle(1, 10)
+			},
+		},
+	},
+})
 
 // SubjectType test
 var SubjectType = graphql.NewObject(graphql.ObjectConfig{
