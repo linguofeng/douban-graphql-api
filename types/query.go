@@ -2,8 +2,8 @@ package types
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/linguofeng/douban-graphql-api/douban/subject/repository"
-	"github.com/linguofeng/douban-graphql-api/douban/subject/usecase"
+	subjectRepo "github.com/linguofeng/douban-graphql-api/douban/subject/repository"
+	subjectUsecase "github.com/linguofeng/douban-graphql-api/douban/subject/usecase"
 )
 
 // QueryType test
@@ -13,8 +13,21 @@ var QueryType = graphql.NewObject(graphql.ObjectConfig{
 		"subjects": &graphql.Field{
 			Type: graphql.NewList(SubjectType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				c := usecase.NewSubjectUsecase(repository.NewHttpSubjectRepository())
+				c := subjectUsecase.NewSubjectUsecase(subjectRepo.NewHttpSubjectRepository())
 				return c.Fetch(1, 10)
+			},
+		},
+		"subject": &graphql.Field{
+			Type: SubjectDetailType,
+			Args: graphql.FieldConfigArgument{
+				"id": &graphql.ArgumentConfig{
+					Type:        graphql.ID,
+					Description: "主题ID",
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				c := subjectUsecase.NewSubjectUsecase(subjectRepo.NewHttpSubjectRepository())
+				return c.GetById("movie", p.Args["id"].(string))
 			},
 		},
 	},

@@ -20,6 +20,12 @@ var UserType = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"uid": &graphql.Field{
 			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if user, ok := p.Source.(models.User); ok {
+					return user.UID, nil
+				}
+				return nil, nil
+			},
 		},
 		"name": &graphql.Field{
 			Type: graphql.String,

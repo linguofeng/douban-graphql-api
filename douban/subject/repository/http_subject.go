@@ -2,6 +2,7 @@ package repository
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -10,17 +11,19 @@ import (
 )
 
 type httpSubjectRepository struct {
-	url string
+	url    string
+	apikey string
 }
 
 func NewHttpSubjectRepository() subject.Repository {
 	return &httpSubjectRepository{
-		url: "https://frodo.douban.com/api/v2/subject_collection/movie_showing/items?start=0&count=20&apiKey=054022eaeae0b00e0fc068c0c0a2102a",
+		url:    "https://frodo.douban.com/api/v2",
+		apikey: "054022eaeae0b00e0fc068c0c0a2102a",
 	}
 }
 
 func (h *httpSubjectRepository) Fetch(start int, count int) (res []*models.Subject, err error) {
-	resp, err := http.Get(h.url)
+	resp, err := http.Get(fmt.Sprintf("%s/subject_collection/movie_showing/items?start=%d&count=%d&apiKey=%s", h.url, start, count, h.apikey))
 	if err != nil {
 		return nil, err
 	}
@@ -43,4 +46,26 @@ func (h *httpSubjectRepository) Fetch(start int, count int) (res []*models.Subje
 	}
 
 	return data.Subjects, nil
+}
+
+func (h *httpSubjectRepository) GetById(stype string, id string) (*models.SubjectDetail, error) {
+	fmt.Println(fmt.Sprintf("%s/%s/%s?apiKey=%s", h.url, stype, id, h.apikey))
+	resp, err := http.Get(fmt.Sprintf("%s/%s/%s?apiKey=%s", h.url, stype, id, h.apikey))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	subject := new(models.SubjectDetail)
+
+	err = json.Unmarshal(body, &subject)
+	if err != nil {
+		return nil, err
+	}
+
+	return subject, nil
 }

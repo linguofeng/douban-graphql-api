@@ -15,6 +15,10 @@ func NewSubjectUsecase(repository subject.Repository) subject.Usecase {
 	}
 }
 
-func (s *subjectUsecase) Fetch(start int, count int) (res []*models.Subject, err error) {
+func (s *subjectUsecase) Fetch(start int, count int) ([]*models.Subject, error) {
 	return s.repository.Fetch(start, count)
+}
+
+func (s *subjectUsecase) GetById(stype string, id string) (*models.SubjectDetail, error) {
+	return s.repository.GetById(stype, id)
 }
