@@ -6,5 +6,4 @@ build:
 
 build-lambda:
 	mkdir -p functions
-	go get ./...
-	go build -o functions/graphql main_lambda.go
+	GO111MODULE=on go build -o functions/graphql main_lambda.go
