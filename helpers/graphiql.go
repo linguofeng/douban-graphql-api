@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"bytes"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -64,6 +65,50 @@ func RenderGraphiQL(c echo.Context, params graphql.Params) {
 	}
 
 	return
+}
+
+func RenderGraphiQLHtml(params graphql.Params) string {
+	t := template.New("GraphiQL")
+	t, err := t.Parse(graphiqlTemplate)
+	if err != nil {
+		return err.Error()
+	}
+
+	// Create variables string
+	vars, err := json.MarshalIndent(params.VariableValues, "", "  ")
+	if err != nil {
+		return err.Error()
+	}
+	varsString := string(vars)
+	if varsString == "null" {
+		varsString = ""
+	}
+
+	// Create result string
+	var resString string
+	if params.RequestString == "" {
+		resString = ""
+	} else {
+		result, err := json.MarshalIndent(graphql.Do(params), "", "  ")
+		if err != nil {
+			return err.Error()
+		}
+		resString = string(result)
+	}
+
+	d := graphiqlData{
+		GraphiqlVersion: graphiqlVersion,
+		QueryString:     params.RequestString,
+		ResultString:    resString,
+		VariablesString: varsString,
+		OperationName:   params.OperationName,
+	}
+	var tpl bytes.Buffer
+	err = t.ExecuteTemplate(&tpl, "index", d)
+	if err != nil {
+		return err.Error()
+	}
+	return tpl.String()
 }
 
 // graphiqlVersion is the current version of GraphiQL

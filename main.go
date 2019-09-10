@@ -16,16 +16,21 @@ import (
 var isLambda = "false"
 
 func handler(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	acceptHeader := req.Headers["Accept"]
-	query := req.QueryStringParameters["query"]
+	acceptHeader := req.Headers["accept"]
 	var result = []byte("")
-	if query != "" {
+	if strings.ToUpper(req.HTTPMethod) == "GET" {
+		query := req.QueryStringParameters["query"]
 		operationName := req.QueryStringParameters["operationName"]
 		variablesString := req.QueryStringParameters["variables"]
 		variables := make(map[string]interface{})
 		_ = json.Unmarshal([]byte(variablesString), &variables)
 		if strings.Contains(acceptHeader, "text/html") {
-			result = []byte("graphiql")
+			result = []byte(helpers.RenderGraphiQLHtml(graphql.Params{
+				Schema:         schema.New(),
+				RequestString:  query,
+				VariableValues: variables,
+				OperationName:  operationName,
+			}))
 		} else {
 			result, _ = json.Marshal(graphql.Do(graphql.Params{
 				Schema:         schema.New(),

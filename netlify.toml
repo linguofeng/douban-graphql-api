@@ -4,3 +4,6 @@
   publish = "site"
 [build.environment]
   GO_IMPORT_PATH = "github.com/linguofeng/douban-graphql-api"
+[[redirects]]
+  from = "/graphql"
+  to = "/.netlify/functions/graphql"
