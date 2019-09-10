@@ -10,13 +10,13 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/labstack/echo/v4"
 	"github.com/linguofeng/douban-graphql-api/helpers"
-	"github.com/linguofeng/douban-graphql-api/schema"
+	_schema "github.com/linguofeng/douban-graphql-api/schema"
 )
 
 var isLambda = "false"
+var schema = _schema.New()
 
 func handler(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	acceptHeader := req.Headers["accept"]
 	var result = []byte("")
 	if strings.ToUpper(req.HTTPMethod) == "GET" {
 		query := req.QueryStringParameters["query"]
@@ -24,16 +24,17 @@ func handler(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 		variablesString := req.QueryStringParameters["variables"]
 		variables := make(map[string]interface{})
 		_ = json.Unmarshal([]byte(variablesString), &variables)
-		if strings.Contains(acceptHeader, "text/html") {
+		// Browser render GraphiQL
+		if strings.Contains(req.Headers["accept"], "text/html") {
 			result = []byte(helpers.RenderGraphiQLHtml(graphql.Params{
-				Schema:         schema.New(),
+				Schema:         schema,
 				RequestString:  query,
 				VariableValues: variables,
 				OperationName:  operationName,
 			}))
 		} else {
 			result, _ = json.Marshal(graphql.Do(graphql.Params{
-				Schema:         schema.New(),
+				Schema:         schema,
 				RequestString:  query,
 				VariableValues: variables,
 				OperationName:  operationName,
@@ -47,7 +48,7 @@ func handler(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 		})
 		_ = json.Unmarshal([]byte(req.Body), &body)
 		result, _ = json.Marshal(graphql.Do(graphql.Params{
-			Schema:         schema.New(),
+			Schema:         schema,
 			RequestString:  body.Query,
 			VariableValues: body.Variables,
 			OperationName:  body.OperationName,
@@ -65,57 +66,58 @@ func handler(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 }
 
 func main() {
-	app := echo.New()
+	// netlify functions
+	if isLambda == "true" {
+		lambda.Start(handler)
+	} else {
+		app := echo.New()
 
-	app.GET("/graphql", func(c echo.Context) error {
-		body := new(struct {
-			Query         string                 `json:"query"`
-			Variables     map[string]interface{} `json:"variables"`
-			OperationName string                 `json:"operationName"`
-		})
-		if err := c.Bind(body); err != nil {
-			return err
-		}
-		acceptHeader := c.Request().Header.Get("Accept")
-		if strings.Contains(acceptHeader, "text/html") {
-			helpers.RenderGraphiQL(c, graphql.Params{
-				Schema:         schema.New(),
-				RequestString:  body.Query,
-				VariableValues: body.Variables,
-				OperationName:  body.OperationName,
+		app.GET("/graphql", func(c echo.Context) error {
+			body := new(struct {
+				Query         string                 `json:"query"`
+				Variables     map[string]interface{} `json:"variables"`
+				OperationName string                 `json:"operationName"`
 			})
-		} else {
+			if err := c.Bind(body); err != nil {
+				return err
+			}
+			acceptHeader := c.Request().Header.Get("Accept")
+			if strings.Contains(acceptHeader, "text/html") {
+				helpers.RenderGraphiQL(c, graphql.Params{
+					Schema:         schema,
+					RequestString:  body.Query,
+					VariableValues: body.Variables,
+					OperationName:  body.OperationName,
+				})
+			} else {
+				c.JSON(http.StatusOK, graphql.Do(graphql.Params{
+					Schema:         schema,
+					RequestString:  body.Query,
+					VariableValues: body.Variables,
+					OperationName:  body.OperationName,
+				}))
+			}
+			return nil
+		})
+
+		app.POST("/graphql", func(c echo.Context) error {
+			body := new(struct {
+				Query         string                 `json:"query"`
+				Variables     map[string]interface{} `json:"variables"`
+				OperationName string                 `json:"operationName"`
+			})
+			if err := c.Bind(body); err != nil {
+				return err
+			}
 			c.JSON(http.StatusOK, graphql.Do(graphql.Params{
-				Schema:         schema.New(),
+				Schema:         schema,
 				RequestString:  body.Query,
 				VariableValues: body.Variables,
 				OperationName:  body.OperationName,
 			}))
-		}
-		return nil
-	})
-
-	app.POST("/graphql", func(c echo.Context) error {
-		body := new(struct {
-			Query         string                 `json:"query"`
-			Variables     map[string]interface{} `json:"variables"`
-			OperationName string                 `json:"operationName"`
+			return nil
 		})
-		if err := c.Bind(body); err != nil {
-			return err
-		}
-		c.JSON(http.StatusOK, graphql.Do(graphql.Params{
-			Schema:         schema.New(),
-			RequestString:  body.Query,
-			VariableValues: body.Variables,
-			OperationName:  body.OperationName,
-		}))
-		return nil
-	})
 
-	if isLambda == "true" {
-		lambda.Start(handler)
-	} else {
 		app.Start("localhost:1234")
 	}
 }
