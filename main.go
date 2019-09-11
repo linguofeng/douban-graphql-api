@@ -18,7 +18,7 @@ var schema = _schema.New()
 
 func handler(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var result = []byte("")
-	if strings.ToUpper(req.HTTPMethod) == "GET" {
+	if strings.ToUpper(req.HTTPMethod) == http.MethodGet {
 		query := req.QueryStringParameters["query"]
 		operationName := req.QueryStringParameters["operationName"]
 		variablesString := req.QueryStringParameters["variables"]
@@ -118,6 +118,6 @@ func main() {
 			return nil
 		})
 
-		app.Start("localhost:1234")
+		app.Start(":1234")
 	}
 }
