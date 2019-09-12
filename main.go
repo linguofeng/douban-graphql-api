@@ -62,7 +62,6 @@ func handlerGraphQL(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRe
 		StatusCode: 200,
 		Headers: map[string]string{
 			"Access-Control-Allow-Origin": "*",
-			"Content-Type":                "application/json; charset=UTF-8",
 		},
 	}, nil
 }
