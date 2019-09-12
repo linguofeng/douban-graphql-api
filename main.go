@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -9,14 +11,16 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/graphql-go/graphql"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/linguofeng/douban-graphql-api/helpers"
 	_schema "github.com/linguofeng/douban-graphql-api/schema"
 )
 
 var isLambda = "false"
+var isProxy = "false"
 var schema = _schema.New()
 
-func handler(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func handlerGraphQL(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var result = []byte("")
 	if strings.ToUpper(req.HTTPMethod) == http.MethodGet {
 		query := req.QueryStringParameters["query"]
@@ -58,9 +62,40 @@ func handler(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 		Body:       string(result),
 		StatusCode: 200,
 		Headers: map[string]string{
-			"Access-Control-Allow-Origin":  "*",
-			"Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE",
-			"Access-Control-Allow-Headers": "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
+			"Access-Control-Allow-Origin": "*",
+			"Content-Type":                "application/json; charset=UTF-8",
+		},
+	}, nil
+}
+
+func handlerProxy(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	resp, err := http.Get(fmt.Sprintf("https://frodo.douban.com%s", req.Path))
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			Body:       string(err.Error()),
+			StatusCode: 200,
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin": "*",
+			},
+		}, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			Body:       string(err.Error()),
+			StatusCode: 500,
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin": "*",
+			},
+		}, err
+	}
+	return events.APIGatewayProxyResponse{
+		Body:       string(body),
+		StatusCode: 200,
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin": "*",
+			"Content-Type":                "application/json; charset=UTF-8",
 		},
 	}, nil
 }
@@ -68,9 +103,16 @@ func handler(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 func main() {
 	// netlify functions
 	if isLambda == "true" {
-		lambda.Start(handler)
+		if isProxy == "true" {
+			lambda.Start(handlerGraphQL)
+		} else {
+			lambda.Start(handlerProxy)
+		}
 	} else {
 		app := echo.New()
+		app.Use(middleware.Recover())
+		app.Use(middleware.Logger())
+		app.Use(middleware.CORS())
 
 		app.GET("/graphql", func(c echo.Context) error {
 			body := new(struct {
@@ -115,6 +157,20 @@ func main() {
 				VariableValues: body.Variables,
 				OperationName:  body.OperationName,
 			}))
+			return nil
+		})
+
+		app.GET("/api/*", func(ctx echo.Context) error {
+			resp, err := http.Get(fmt.Sprintf("https://frodo.douban.com%s", ctx.Request().URL.String()))
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+			ctx.JSONBlob(http.StatusOK, body)
 			return nil
 		})
 
