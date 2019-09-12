@@ -11,6 +11,7 @@ func New() graphql.Schema {
 		Query: types.QueryType,
 	})
 	if err != nil {
+		panic(err)
 	}
 	return schema
 }

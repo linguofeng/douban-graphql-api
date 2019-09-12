@@ -102,8 +102,33 @@ var SubjectDetailType = graphql.NewObject(graphql.ObjectConfig{
 		"title": &graphql.Field{
 			Type: graphql.String,
 		},
+		"originalTitle": &graphql.Field{
+			Type: graphql.String,
+		},
 		"type": &graphql.Field{
 			Type: graphql.String,
+		},
+		"intro": &graphql.Field{
+			Type: graphql.String,
+		},
+		"year": &graphql.Field{
+			Type: graphql.String,
+		},
+		"image": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				subject := p.Source.(*models.SubjectDetail)
+				return subject.Image.Normal, nil
+			},
+		},
+		"genres": &graphql.Field{
+			Type: graphql.NewList(graphql.String),
+		},
+		"countries": &graphql.Field{
+			Type: graphql.NewList(graphql.String),
+		},
+		"durations": &graphql.Field{
+			Type: graphql.NewList(graphql.String),
 		},
 		"cover": &graphql.Field{
 			Type: CoverType,
@@ -114,8 +139,9 @@ var SubjectDetailType = graphql.NewObject(graphql.ObjectConfig{
 		"reviews": &graphql.Field{
 			Type: graphql.NewList(ReivewType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				subject := p.Source.(*models.SubjectDetail)
 				r := reviewUsecase.NewReviewUsecase(reviewRepo.NewHttpReviewRepository())
-				return r.Fetch("movie", "26709258")
+				return r.Fetch(subject.Type, subject.ID)
 			},
 		},
 	},
