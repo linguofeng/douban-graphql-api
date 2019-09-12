@@ -17,7 +17,6 @@ import (
 )
 
 var isLambda = "false"
-var isProxy = "false"
 var schema = _schema.New()
 
 func handlerGraphQL(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -68,46 +67,10 @@ func handlerGraphQL(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRe
 	}, nil
 }
 
-func handlerProxy(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	resp, err := http.Get(fmt.Sprintf("https://frodo.douban.com%s", req.Path))
-	if err != nil {
-		return events.APIGatewayProxyResponse{
-			Body:       string(err.Error()),
-			StatusCode: 200,
-			Headers: map[string]string{
-				"Access-Control-Allow-Origin": "*",
-			},
-		}, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return events.APIGatewayProxyResponse{
-			Body:       string(err.Error()),
-			StatusCode: 500,
-			Headers: map[string]string{
-				"Access-Control-Allow-Origin": "*",
-			},
-		}, err
-	}
-	return events.APIGatewayProxyResponse{
-		Body:       string(body),
-		StatusCode: 200,
-		Headers: map[string]string{
-			"Access-Control-Allow-Origin": "*",
-			"Content-Type":                "application/json; charset=UTF-8",
-		},
-	}, nil
-}
-
 func main() {
 	// netlify functions
 	if isLambda == "true" {
-		if isProxy == "true" {
-			lambda.Start(handlerGraphQL)
-		} else {
-			lambda.Start(handlerProxy)
-		}
+		lambda.Start(handlerGraphQL)
 	} else {
 		app := echo.New()
 		app.Use(middleware.Recover())

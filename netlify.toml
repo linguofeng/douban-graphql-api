@@ -2,9 +2,17 @@
   command = "make build-lambda"
   functions = "functions"
   publish = "site"
+
 [build.environment]
   GO_IMPORT_PATH = "github.com/linguofeng/douban-graphql-api"
+
 [[redirects]]
   from = "/graphql"
   to = "/.netlify/functions/graphql"
   status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://frodo.douban.com/api/:splat"
+  status = 200
+  force = true
